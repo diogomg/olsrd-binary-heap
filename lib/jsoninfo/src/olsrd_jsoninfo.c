@@ -1032,6 +1032,7 @@ static void ipc_print_config(struct autobuf *abuf) {
   abuf_json_boolean(abuf, "clearScreen", olsr_cnf->clear_screen);
   abuf_json_int(abuf, "tcRedundancy", olsr_cnf->tc_redundancy);
   abuf_json_int(abuf, "mprCoverage", olsr_cnf->mpr_coverage);
+  abuf_json_boolean(abuf, "dijkstraBinaryHeap", olsr_cnf->dijkstra_binary_heap);
 
   if (!olsr_cnf->lq_level) {
     abuf_json_boolean(abuf, "useHysteresis", olsr_cnf->use_hysteresis);
