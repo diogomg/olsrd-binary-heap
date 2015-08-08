@@ -46,6 +46,7 @@
 #include "defs.h"
 #include "packet.h"
 #include "common/avl.h"
+#include "common/heap.h"
 #include "common/list.h"
 #include "scheduler.h"
 
@@ -72,6 +73,7 @@ struct tc_entry {
   struct avl_node vertex_node;         /* node keyed by ip address */
   union olsr_ip_addr addr;             /* vertex_node key */
   struct avl_node cand_tree_node;      /* SPF candidate heap, node keyed by path_etx */
+  struct heap_node cand_heap_node;     /* SPF candidate binary heap, node keyed by path_etx */
   olsr_linkcost path_cost;             /* SPF calculated distance, cand_tree_node key */
   struct list_node path_list_node;     /* SPF result list */
   struct avl_tree edge_tree;           /* subtree for edges */
@@ -101,6 +103,7 @@ struct tc_entry {
 
 AVLNODE2STRUCT(vertex_tree2tc, struct tc_entry, vertex_node);
 AVLNODE2STRUCT(cand_tree2tc, struct tc_entry, cand_tree_node);
+HEAPNODE2STRUCT(cand_heap2tc, struct tc_entry, cand_heap_node);
 LISTNODE2STRUCT(pathlist2tc, struct tc_entry, path_list_node);
 
 /*
