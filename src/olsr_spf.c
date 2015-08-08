@@ -95,25 +95,36 @@ avl_comp_etx(const void *etx1, const void *etx2)
 }
 
 /*
- * olsr_spf_add_cand_tree
+ * olsr_spf_add_cand_set
  *
- * Key an existing vertex to a candidate tree.
+ * Key an existing vertex to the candidate priority queue.
  */
 static void
-olsr_spf_add_cand_tree(struct avl_tree *tree, struct tc_entry *tc)
+olsr_spf_add_cand_set(void *cand_set, struct tc_entry *tc)
 {
 #if !defined(NODEBUG) && defined(DEBUG)
   struct ipaddr_str buf;
   struct lqtextbuffer lqbuffer;
 #endif /* !defined(NODEBUG) && defined(DEBUG) */
-  tc->cand_tree_node.key = &tc->path_cost;
 
 #ifdef DEBUG
-  OLSR_PRINTF(2, "SPF: insert candidate %s, cost %s\n", olsr_ip_to_string(&buf, &tc->addr),
-              get_linkcost_text(tc->path_cost, false, &lqbuffer));
+  OLSR_PRINTF(2, "SPF: insert candidate %s, cost %s in %s\n", olsr_ip_to_string(&buf, &tc->addr),
+              get_linkcost_text(tc->path_cost, false, &lqbuffer),
+              olsr_cnf->dijkstra_binary_heap ? "Binary heap" : "AVL tree");
 #endif /* DEBUG */
 
-  avl_insert(tree, &tc->cand_tree_node, AVL_DUP);
+  /*
+   * add the vertex to the priority queue was chosen.
+   */
+  if(olsr_cnf->dijkstra_binary_heap){
+    tc->cand_heap_node.key = tc->path_cost;
+    heap_init_node(&tc->cand_heap_node);
+    heap_insert((struct bin_heap*)cand_set, &tc->cand_heap_node);
+  }
+  else{
+    tc->cand_tree_node.key = &tc->path_cost;
+    avl_insert((struct avl_tree*)cand_set, &tc->cand_tree_node, AVL_DUP);
+  }
 }
 
 /*
@@ -249,7 +260,7 @@ olsr_spf_relax(struct avl_tree *cand_tree, struct tc_entry *tc)
 
       /* re-insert on candidate tree with the better metric */
       new_tc->path_cost = new_cost;
-      olsr_spf_add_cand_tree(cand_tree, new_tc);
+      olsr_spf_add_cand_set(cand_tree, new_tc);
 
       /* pull-up the next-hop and bump the hop count */
       if (tc->next_hop) {
@@ -375,7 +386,7 @@ olsr_calculate_routing_table(bool force)
    * zero ourselves and add us to the candidate tree.
    */
   tc_myself->path_cost = ZERO_ROUTE_COST;
-  olsr_spf_add_cand_tree(&cand_tree, tc_myself);
+  olsr_spf_add_cand_set(&cand_tree, tc_myself);
 
   /*
    * add edges to and from our neighbours.
