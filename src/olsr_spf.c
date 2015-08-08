@@ -149,6 +149,42 @@ olsr_spf_del_cand_tree(struct avl_tree *tree, struct tc_entry *tc)
 }
 
 /*
+ * olsr_spf_decrease_key
+ *
+ * update the node in the candidate set with the new pathcost.
+ */
+
+static void
+olsr_spf_decrease_key(void *cand_set, struct tc_entry *tc, olsr_linkcost new_cost)
+{
+#if !defined(NODEBUG) && defined(DEBUG)
+  struct ipaddr_str buf;
+  struct lqtextbuffer lqbuffer;
+#endif /* !defined(NODEBUG) && defined(DEBUG) */
+
+#ifdef DEBUG
+  OLSR_PRINTF(2, "SPF: update candidate %s with old cost %s to the new cost %s in %s\n", olsr_ip_to_string(&buf, &tc->addr),
+              get_linkcost_text(tc->path_cost, false, &lqbuffer), get_linkcost_text(new_cost, false, &lqbuffer),
+              olsr_cnf->dijkstra_binary_heap ? "Binary heap" : "AVL tree");
+#endif /* DEBUG */
+
+  tc->path_cost = new_cost;
+
+  /*
+   * update the vertex in the priority queue defined.
+   */
+  if(olsr_cnf->dijkstra_binary_heap){
+    tc->cand_heap_node.key = new_cost;
+    heap_decrease_key((struct bin_heap*)cand_set, &tc->cand_heap_node);
+  }
+  else{
+    olsr_spf_del_cand_tree((struct avl_tree*)cand_set, tc);
+    olsr_spf_add_cand_set((struct avl_tree*)cand_set, tc);
+  }
+}
+
+
+/*
  * olsr_spf_add_path_list
  *
  * Insert an SPF result at the end of the path list.
