@@ -225,11 +225,11 @@ olsr_spf_extract_best(struct avl_tree *tree)
  * olsr_spf_relax
  *
  * Explore all edges of a node and add the node
- * to the candidate tree if the if the aggregate
+ * to the candidate set if the aggregate
  * path cost is better.
  */
 static void
-olsr_spf_relax(struct avl_tree *cand_tree, struct tc_entry *tc)
+olsr_spf_relax(void *cand_set, struct tc_entry *tc)
 {
   struct avl_node *edge_node;
   olsr_linkcost new_cost;
@@ -289,14 +289,15 @@ olsr_spf_relax(struct avl_tree *cand_tree, struct tc_entry *tc)
 
     if (new_cost < new_tc->path_cost) {
 
-      /* if this node has been on the candidate tree delete it */
+      /* if this node has been on the candidate set update it */
       if (new_tc->path_cost < ROUTE_COST_BROKEN) {
-        olsr_spf_del_cand_tree(cand_tree, new_tc);
+          olsr_spf_decrease_key(cand_set, new_tc, new_cost);
       }
-
-      /* re-insert on candidate tree with the better metric */
-      new_tc->path_cost = new_cost;
-      olsr_spf_add_cand_set(cand_tree, new_tc);
+      else{
+        /* insert it on candidate set with the new metric */
+        new_tc->path_cost = new_cost;
+        olsr_spf_add_cand_set(cand_set, new_tc);
+      }
 
       /* pull-up the next-hop and bump the hop count */
       if (tc->next_hop) {
