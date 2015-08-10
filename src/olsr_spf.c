@@ -141,7 +141,7 @@ olsr_spf_del_cand_tree(struct avl_tree *tree, struct tc_entry *tc)
   struct ipaddr_str buf;
   struct lqtextbuffer lqbuffer;
 #endif /* NODEBUG */
-  OLSR_PRINTF(2, "SPF: delete candidate %s, cost %s\n", olsr_ip_to_string(&buf, &tc->addr),
+  OLSR_PRINTF(2, "SPF: delete candidate %s, cost %s in AVL tree\n", olsr_ip_to_string(&buf, &tc->addr),
               get_linkcost_text(tc->path_cost, false, &lqbuffer));
 #endif /* DEBUG */
 
