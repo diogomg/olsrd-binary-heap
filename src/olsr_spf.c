@@ -327,29 +327,35 @@ olsr_spf_relax(void *cand_set, struct tc_entry *tc)
  *
  * Run the Dijkstra algorithm.
  *
- * A node gets added to the candidate tree when one of its edges has
- * an overall better root path cost than the node itself.
- * The node with the shortest metric gets moved from the candidate to
+ * A node gets added to the priority queue(AVL tree or Binary heap)
+ * when one of its edges has an overall better root path cost than
+ * the node itself.
+ * The node with the shortest metric gets moved from the priority queue to
  * the path list every pass.
  * The SPF computation is completed when there are no more nodes
- * on the candidate tree.
+ * on the candidate set.
  */
 static void
-olsr_spf_run_full(struct avl_tree *cand_tree, struct list_node *path_list, int *path_count)
+olsr_spf_run_full(void *cand_set, struct list_node *path_list, int *path_count)
 {
   struct tc_entry *tc;
 
   *path_count = 0;
 
-  while ((tc = olsr_spf_extract_best(cand_tree))) {
+  while ((tc = olsr_spf_extract_best(cand_set))) {
 
-    olsr_spf_relax(cand_tree, tc);
+    olsr_spf_relax(cand_set, tc);
 
     /*
-     * move the best path from the candidate tree
+     * move the best path from the priority queue
      * to the path list.
+     * The extract_best on Binary heap deletes and returns the vertex from the
+     * priority queue. The function on AVL just returns the vertex, this node
+     * must be deleted from AVL.
      */
-    olsr_spf_del_cand_tree(cand_tree, tc);
+    if(!olsr_cnf->dijkstra_binary_heap){
+      olsr_spf_del_cand_tree((struct avl_tree*)cand_set, tc);
+    }
     olsr_spf_add_path_list(path_list, path_count, tc);
   }
 }
