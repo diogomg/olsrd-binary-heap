@@ -41,12 +41,14 @@
  *
  * Implementation of Dijkstras algorithm. Initially all nodes
  * are initialized to infinite cost. First we put ourselves
- * on the heap of reachable nodes. Our heap implementation
- * is based on an AVL tree which gives interesting performance
- * characteristics for the frequent operations of minimum key
- * extraction and re-keying. Next all neighbors of a node are
- * explored and put on the heap if the cost of reaching them is
- * better than reaching the current candidate node.
+ * on the heap of reachable nodes. Olsrd offer two heap based
+ * implementations for the priority queue, AVL tree and Minimum Binary heap.
+ * Both the implementations give interesting performance characteristics
+ * for the frequent operations on priority queues, AVL is better
+ * to minimum key extraction and Binary heap to re-keying.
+ * Next all neighbors of a node are explored and put on the heap if the
+ * cost of reaching them is better than reaching the current
+ * candidate node.
  * The SPF calculation is terminated if there are no more nodes
  * on the heap.
  */
