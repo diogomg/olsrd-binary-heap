@@ -375,6 +375,7 @@ olsr_calculate_routing_table(bool force)
 #ifdef SPF_PROFILING
   struct timeval t1, t2, t3, t4, t5, spf_init, spf_run, route, kernel, total;
 #endif /* SPF_PROFILING */
+  struct bin_heap cand_heap;
   struct avl_tree cand_tree;
   struct avl_node *rtp_tree_node;
   struct list_node path_list;          /* head of the path_list */
@@ -400,9 +401,15 @@ olsr_calculate_routing_table(bool force)
 #endif /* SPF_PROFILING */
 
   /*
-   * Prepare the candidate tree and result list.
+   * Prepare the candidate set with the priority queue defined
+   * (AVL tree or Binary heap) and result list.
    */
-  avl_init(&cand_tree, avl_comp_etx);
+  if(olsr_cnf->dijkstra_binary_heap){
+    heap_init(&cand_heap);
+  }
+  else{
+    avl_init(&cand_tree, avl_comp_etx);
+  }
   list_head_init(&path_list);
   olsr_bump_routingtree_version();
 
@@ -432,10 +439,15 @@ olsr_calculate_routing_table(bool force)
   }
 
   /*
-   * zero ourselves and add us to the candidate tree.
+   * zero ourselves and add us to the priority queue chosen.
    */
   tc_myself->path_cost = ZERO_ROUTE_COST;
-  olsr_spf_add_cand_set(&cand_tree, tc_myself);
+  if(olsr_cnf->dijkstra_binary_heap){
+    olsr_spf_add_cand_set(&cand_heap, tc_myself);
+  }
+  else{
+    olsr_spf_add_cand_set(&cand_tree, tc_myself);
+  }
 
   /*
    * add edges to and from our neighbours.
@@ -497,7 +509,12 @@ olsr_calculate_routing_table(bool force)
   /*
    * Run the SPF calculation.
    */
-  olsr_spf_run_full(&cand_tree, &path_list, &path_count);
+  if(olsr_cnf->dijkstra_binary_heap){
+    olsr_spf_run_full(&cand_heap, &path_list, &path_count);
+  }
+  else{
+    olsr_spf_run_full(&cand_tree, &path_list, &path_count);
+  }
 
   OLSR_PRINTF(2, "\n--- %s ------------------------------------------------- DIJKSTRA\n\n", olsr_wallclock_string());
 
