@@ -214,11 +214,17 @@ olsr_spf_add_path_list(struct list_node *head, int *path_count, struct tc_entry 
  * return the node with the minimum pathcost.
  */
 static struct tc_entry *
-olsr_spf_extract_best(struct avl_tree *tree)
+olsr_spf_extract_best(void *cand_set)
 {
-  struct avl_node *node = avl_walk_first(tree);
-
-  return (node ? cand_tree2tc(node) : NULL);
+  void *node = NULL;
+  if(olsr_cnf->dijkstra_binary_heap){
+    node = (struct heap_node*)heap_extract_min((struct bin_heap*)cand_set);
+    return (node ? cand_heap2tc(node) : NULL);
+  }
+  else{
+    node = (struct avl_node*)avl_walk_first((struct avl_tree*)cand_set);
+    return (node ? cand_tree2tc(node) : NULL);
+  }
 }
 
 /*
